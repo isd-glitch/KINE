@@ -10,13 +10,28 @@
     <div id="app">
         <header>
             <h1>チャットアプリ</h1>
-            <button id="logout">ログアウト</button>
+            <button id="logout" style="display: none;">ログアウト</button>
         </header>
-        <main id="chat-container">
+        <main id="chat-container" style="display: none;">
             <div id="messages"></div>
             <form id="message-form">
                 <input type="text" id="message-input" placeholder="メッセージを入力..." required>
                 <button type="submit">送信</button>
+            </form>
+            <form id="room-form">
+                <input type="text" id="room-name" placeholder="トークルーム名" required>
+                <button type="submit">トークルーム作成</button>
+            </form>
+            <form id="friend-form">
+                <input type="text" id="friend-username" placeholder="友達のユーザーネーム" required>
+                <button type="submit">友達追加</button>
+            </form>
+        </main>
+        <main id="login-container">
+            <form id="login-form">
+                <input type="text" id="username" placeholder="ユーザーネーム" required>
+                <input type="password" id="password" placeholder="パスワード" required>
+                <button type="submit">ログイン</button>
             </form>
         </main>
     </div>

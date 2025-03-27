@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where, getDocs } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
 
 // Firebase設定
 const firebaseConfig = {
@@ -14,19 +13,24 @@ const firebaseConfig = {
 
 // Firebase初期化
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 匿名ログイン
-signInAnonymously(auth).catch(console.error);
+// ユーザー状態の監視（Firestoreベースのログインに対応）
+const currentUser = localStorage.getItem("currentUser");
+if (currentUser) {
+    document.getElementById("login-container").style.display = "none";
+    document.getElementById("chat-container").style.display = "block";
+    document.getElementById("logout").style.display = "block";
+} else {
+    document.getElementById("login-container").style.display = "block";
+    document.getElementById("chat-container").style.display = "none";
+    document.getElementById("logout").style.display = "none";
+}
 
-// ユーザー状態の監視
-onAuthStateChanged(auth, user => {
-    if (user) {
-        console.log("ログインしました:", user.uid);
-    } else {
-        console.log("ログアウトしました");
-    }
+// ログアウト
+document.getElementById("logout").addEventListener("click", () => {
+    localStorage.removeItem("currentUser");
+    window.location.href = "login.html";
 });
 
 // メッセージ送信
@@ -56,7 +60,44 @@ onSnapshot(messagesQuery, (snapshot) => {
     });
 });
 
-// ログアウト
-document.getElementById("logout").addEventListener("click", () => {
-    signOut(auth).catch(console.error);
+// トークルーム作成
+const roomForm = document.getElementById("room-form");
+roomForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const roomName = document.getElementById("room-name").value;
+
+    try {
+        await addDoc(collection(db, "rooms"), {
+            name: roomName,
+            createdAt: serverTimestamp(),
+        });
+        alert("トークルームが作成されました！");
+    } catch (error) {
+        console.error("トークルーム作成エラー:", error);
+    }
+});
+
+// 友達追加
+const friendForm = document.getElementById("friend-form");
+friendForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const friendUsername = document.getElementById("friend-username").value;
+
+    try {
+        const userRef = collection(db, "users");
+        const friendQuery = query(userRef, where("username", "==", friendUsername));
+        const friendSnapshot = await getDocs(friendQuery);
+
+        if (!friendSnapshot.empty) {
+            await addDoc(collection(db, "friends"), {
+                userId: auth.currentUser.uid,
+                friendUsername: friendUsername,
+            });
+            alert("友達が追加されました！");
+        } else {
+            alert("ユーザーが見つかりませんでした。");
+        }
+    } catch (error) {
+        console.error("友達追加エラー:", error);
+    }
 });
